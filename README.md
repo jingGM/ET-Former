@@ -10,7 +10,7 @@
 > [Jing Liang](https://jingliangc.github.io/), [He Yin](https://scholar.google.com/citations?hl=en&user=hKMVC8IAAAAJ), [Xuewei Qi](https://scholar.google.com/citations?hl=en&user=pOA6uKMAAAAJ&view_op=list_works&sortby=pubdate), [Jong Jin Park](https://scholar.google.com/citations?user=W-W1ew4AAAAJ), [Min Sun](https://scholar.google.com/citations?user=1Rf6sGcAAAAJ), [Min Sun](https://scholar.google.com/citations?user=1Rf6sGcAAAAJ), [Rajasimman Madhivanan](https://www.amazon.science/author/rajasimman-madhivanan), [Dinesh Manocha](https://scholar.google.com/citations?user=X08l_4IAAAAJ)
 
 
->  [[PDF]](https://arxiv.org/abs/2410.11019) [[Project]](https://github.com/jingGM/ET-Former.git) [[Intro Video]](https://youtu.be/DcXVHMpL4oQ?si=Ey5jeSMXcAdiKcAU) 
+>  [[PDF]](https://arxiv.org/abs/2410.11019) [[Project]](https://github.com/jingGM/ET-Former.git) [[Intro Video]](https://youtu.be/aXnddiGxag0) 
 
 
 ## News
