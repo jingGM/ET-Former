@@ -10,11 +10,12 @@
 > [Jing Liang](https://jingliangc.github.io/), [He Yin](https://scholar.google.com/citations?hl=en&user=hKMVC8IAAAAJ), [Xuewei Qi](https://scholar.google.com/citations?hl=en&user=pOA6uKMAAAAJ&view_op=list_works&sortby=pubdate), [Jong Jin Park](https://scholar.google.com/citations?user=W-W1ew4AAAAJ), [Min Sun](https://scholar.google.com/citations?user=1Rf6sGcAAAAJ), [Min Sun](https://scholar.google.com/citations?user=1Rf6sGcAAAAJ), [Rajasimman Madhivanan](https://www.amazon.science/author/rajasimman-madhivanan), [Dinesh Manocha](https://scholar.google.com/citations?user=X08l_4IAAAAJ)
 
 
->  [[PDF]](https://arxiv.org/abs/2410.11019) [[Project]](https://github.com/jingGM/ET-Former.git) [[Intro Video]](https://youtu.be/aXnddiGxag0) 
+>  [[PDF]](https://arxiv.org/abs/2410.11019) [[Project]](https://github.com/jingGM/ET-Former.git) [[Intro Video]](https://youtu.be/aXnddiGxag0) [[Official Code]](https://github.com/amazon-science/ET-Former)
 
 
 ## News
 - [2025/02]: We submitted the paper to IROS 2025;
+- [2025/06]: Our paper is accepeted by IROS 2025;
 </br>
 
 
@@ -27,46 +28,85 @@ We introduce ET-Former, a novel end-to-end algorithm for semantic scene completi
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:| 
 | ***Figure 1. Overall Architecture of ET-Former**. We present a two-stage pipeline for processing mono-cam images and generate both a semantic occupancy map m_s and its corresponding uncertainty map m_u. In stage 1, we introduce a novel triplane-based deformable attention model to generate the occupancy queries m_o from the given mono-cam images, which reduces high-dimensional 3D feature processing to 2D computations. In stage 2, we employ the efficient triplane-based deformable attention mechanism to generate the semantic map, with the inferred voxels from stage 1 as input and conditioned on the RGB image. To estimate the uncertainty in the semantic map, we incorporate a CVAE method, and quantify the uncertainty using the variance of the CVAE latent samples.* |
 
-## Getting Started
-- The code will come soon.
+## Installation
+```
+conda create -n etformer python=3.10
+conda activate etformer
+conda install pytorch==2.0.0 torchvision==0.15.0 pytorch-cuda=11.8 -c pytorch -c nvidia
+pip3 install mmcv-full -f https://download.openmmlab.com/mmcv/dist/cu118/torch2.0/index.html
+pip3 install torch-scatter -f https://data.pyg.org/whl/torch-2.0.0+cu118.html
+pip3 install spconv-cu118
+pip3 install -r requirements.txt
+
+# Check the correct version: https://shi-labs.com/natten/wheels/
+pip3 install natten==0.14.6+torch200cu118 -f https://shi-labs.com/natten/wheels/
+
+pip3 install -v -e submodules/deform_attn_3d/
+```
 
 ## Dataset
 
 - [x] SemanticKITTI
 
-[//]: # (## Bibtex)
+Download datasets:
+-  The **semantic scene completion dataset v1.1, odometery data, poses** (SemanticKITTI voxel data, 700 MB) from [SemanticKITTI website](http://www.semantic-kitti.org/dataset.html#download).
+-  The **RGB images** (Download odometry data set (color, 65 GB)) from [KITTI Odometry website](http://www.cvlibs.net/datasets/kitti/eval_odometry.php).
+-  The **calibration and pose** files from voxformer/preprocess/data_odometry_calib/sequences.
+-  The **preprocessed ground truth** (~700MB) from [labels](https://drive.google.com/file/d/1r6RWjPClt9-EBbuOczLB295c00o7pOOP/view?usp=share_link).
+-  The **voxelized psuedo point cloud** and **query proposals** (~400MB) based on MobileStereoNet from [sequences_msnet3d_sweep10](https://drive.google.com/file/d/1nxWC3z4D4LDboQoMA-mnlJ7QHUnR9gRn/view?usp=share_link).
 
-[//]: # (If this work is helpful for your research, please cite the following BibTeX entry.)
+preprocess targets:
+```
+python preprocess_data.py --data_root="DATA_ROOT_kitti_folder" --data_config="data/semantic_kitti/semantic-kitti.yaml" --batch=1 --index=0 --type=0
+```
 
-[//]: # ()
-[//]: # (```)
+## Download Pretrained Models
+```commandline
+mkdir pretrained_models
+cd pretrained_models
+```
+download [StageOne](https://drive.google.com/file/d/1fVxfhIgrVkoWvfWWFgVBOl5E5f3sXzbq/view?usp=sharing) and [StageTwo](https://drive.google.com/file/d/1ifkShR71gS7nv33pgQg7JG4JOwSUqc3p/view?usp=sharing)
 
-[//]: # (@InProceedings{li2023voxformer,)
+## Training
+Train stage one:
+```
+python3 -m torch.distributed.launch --nproc_per_node=4 main.py --only_load_model --model_type=3 --data_cfg="data/semantic_kitti/semantic-kitti.yaml" --snapshot="pretrained_models/stage1.pth" --data_root="DATA_ROOT_kitti_folder" --batch_size=1 --wandb_api="W&B api" --wandb_proj="W&B project name"
+```
 
-[//]: # (      title={VoxFormer: Sparse Voxel Transformer for Camera-based 3D Semantic Scene Completion}, )
+Generate data for the 2nd stage:
+```
+python3 evaluate.py --data_cfg="data/semantic_kitti/semantic-kitti.yaml" --model_type=3 --data_root="DATA_ROOT_kitti_folder" --batch_size=1 --snapshot="pretrained_models/stage1.pth" --generate_data
+```
 
-[//]: # (      author={Li, Yiming and Yu, Zhiding and Choy, Christopher and Xiao, Chaowei and Alvarez, Jose M and Fidler, Sanja and Feng, Chen and Anandkumar, Anima},)
+Train stage two:
+```
+python3 -m torch.distributed.launch --nproc_per_node=4 main.py --only_load_model --model_type=2 --data_cfg="data/semantic_kitti/semantic-kitti.yaml" --snapshot="pretrained_models/stage2.pth" --data_root="DATA_ROOT_kitti_folder" --batch_size=1 --wandb_api="W&B api" --wandb_proj="W&B project name"
+```
 
-[//]: # (      booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition &#40;CVPR&#41;},)
 
-[//]: # (      year={2023})
+## Evaluation
+Evaluate stage one:
+```
+python3 evaluate.py --data_cfg="data/semantic_kitti/semantic-kitti.yaml" --model_type=3 --data_root="DATA_ROOT_kitti_folder" --batch_size=1 --snapshot="pretrained_models/stage1.pth"
+```
+Evaluate stage two:
+```
+python3 evaluate.py --data_cfg="data/semantic_kitti/semantic-kitti.yaml" --model_type=2 --data_root="DATA_ROOT_kitti_folder" --batch_size=1 --snapshot="pretrained_models/stage2.pth"
+```
 
-[//]: # (})
+## Bibtex
+If this work is helpful for your research, please cite the following BibTeX entry.
 
-[//]: # (```)
+```
+@inproceedings{liang2024etformer,
+      title={ET-Former: Efficient Triplane Deformable Attention for 3D Semantic Scene Completion From Monocular Camera}, 
+      author={\textbf{Jing Liang} and He Yin and Xuewei Qi and Jong Jin Park and Min Sun and Rajasimman Madhivanan and Dinesh Manocha},
+  booktitle={2025 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  year={2025},
+  organization={IEEE}
+}
+```
 
-## License
-
-[//]: # (Copyright © 2022-2023, NVIDIA Corporation and Affiliates. All rights reserved.)
-
-[//]: # ()
-[//]: # (This work is made available under the Nvidia Source Code License-NC. Click [here]&#40;https://github.com/NVlabs/VoxFormer/blob/main/LICENSE&#41; to view a copy of this license.)
-
-[//]: # ()
-[//]: # (The pre-trained models are shared under [CC-BY-NC-SA-4.0]&#40;https://creativecommons.org/licenses/by-nc-sa/4.0/&#41;. If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.)
-
-[//]: # ()
-[//]: # (For business inquiries, please visit our website and submit the form: [NVIDIA Research Licensing]&#40;https://www.nvidia.com/en-us/research/inquiries/&#41;.)
 
 ## Acknowledgement
 

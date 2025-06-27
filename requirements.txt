@@ -1,0 +1,25 @@
+einops
+opencv-python
+empy
+easydict
+pyyaml
+wandb
+tensorboard
+tqdm
+plyfile
+numba
+pyqt5
+mayavi
+jaxtyping
+seaborn
+scipy
+numpy==1.26.4
+
+omegaconf
+torchmetrics==0.10.3
+fvcore
+iopath
+xformers==0.0.18
+submitit
+--extra-index-url https://pypi.nvidia.com
+cuml-cu11
