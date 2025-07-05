@@ -48,7 +48,7 @@ pip3 install -v -e submodules/deform_attn_3d/
 
 - [x] SemanticKITTI
 
-Download datasets:
+Download datasets: The dataset preparation is from [VoxFormer](https://github.com/NVlabs/VoxFormer/blob/main/docs/prepare_dataset.md). Their links are not working well, please run their code to generate the ground truth and queries.
 -  The **semantic scene completion dataset v1.1, odometery data, poses** (SemanticKITTI voxel data, 700 MB) from [SemanticKITTI website](http://www.semantic-kitti.org/dataset.html#download).
 -  The **RGB images** (Download odometry data set (color, 65 GB)) from [KITTI Odometry website](http://www.cvlibs.net/datasets/kitti/eval_odometry.php).
 -  The **calibration and pose** files from voxformer/preprocess/data_odometry_calib/sequences.
